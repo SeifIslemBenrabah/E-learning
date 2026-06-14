@@ -18,7 +18,7 @@ const createResource = async (req, res) => {
 const getAllResources = async (req, res) => {
   try {
     const resources = await Resource.findAll({
-      include: [{ model: Module, attributes: ['id', 'moduleName'] }]
+      include: [{ model: Module, attributes: ['id', 'Name'] }]
     });
     res.json(resources);
   } catch (error) {
@@ -31,7 +31,7 @@ const getResourceById = async (req, res) => {
   try {
     const { id } = req.params;
     const resource = await Resource.findByPk(id, {
-      include: [{ model: Module, attributes: ['id', 'moduleName'] }]
+      include: [{ model: Module, attributes: ['id', 'Name'] }]
     });
 
     if (!resource) {

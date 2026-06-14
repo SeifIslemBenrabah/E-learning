@@ -10,6 +10,7 @@ router.post('/bulk', studentController.createManyStudents);
 router.post("/upload", upload.single("file"), studentController.uploadStudents);
 router.get('/', studentController.getAllStudents);
 router.get('/search', studentController.searchStudents);
+router.get('/user/:userId', studentController.getStudentByUserId);
 router.get('/:id', studentController.getStudentById);
 
 router.put('/:id', studentController.updateStudent);

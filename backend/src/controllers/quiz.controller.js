@@ -4,6 +4,8 @@ const Question = require("../models/question.model");
 const Answer = require("../models/answer.model");
 const Result = require("../models/result.model");
 
+const Student = require("../models/student.model");
+
 const createQuiz = async (req, res) => {
   try {
     // if (req.user.role !== "teacher")
@@ -54,10 +56,12 @@ const getQuiz = async (req, res) => {
 
 const submitQuiz = async (req, res) => {
   try {
-    // if (req.user.role !== "student")
-    //   return res.status(403).json({ error: "Only students can submit quizzes" });
+    const { quizId, answers, userId } = req.body;
 
-    const { quizId, answers } = req.body;
+    // Resolve userId (users.id) → student.id
+    const student = await Student.findOne({ where: { userId } });
+    if (!student) return res.status(404).json({ error: "Student not found" });
+
     const questions = await Question.findAll({
       where: { quizId },
       include: [Answer],
@@ -67,13 +71,13 @@ const submitQuiz = async (req, res) => {
     for (let q of questions) {
       const correctAnswer = q.Answers.find((a) => a.isCorrect);
       const userAnswer = answers.find((a) => a.questionId === q.id);
-      if (userAnswer && userAnswer.answerId === correctAnswer.id) {
+      if (userAnswer && correctAnswer && userAnswer.answerId === correctAnswer.id) {
         score++;
       }
     }
 
     const result = await Result.create({
-      studentId: req.user.id,
+      studentId: student.id,
       quizId,
       score,
       total: questions.length,
@@ -85,4 +89,16 @@ const submitQuiz = async (req, res) => {
   }
 };
 
-module.exports = { createQuiz, addQuestion, getQuiz, submitQuiz };
+const getQuizzesByCourse = async (req, res) => {
+  try {
+    const quizzes = await Quiz.findAll({
+      where: { courId: req.params.courId },
+      include: { model: Question, include: [Answer] },
+    });
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { createQuiz, addQuestion, getQuiz, getQuizzesByCourse, submitQuiz };

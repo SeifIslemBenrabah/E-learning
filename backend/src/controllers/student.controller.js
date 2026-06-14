@@ -2,29 +2,18 @@
 const { Op } = require('sequelize');
 const Student = require('../models/student.model');
 const User = require('../models/user.model');
-const Promo = require('../models/promo.model')
-const Grade = require('../models/grade.model')
+const Promo = require('../models/promo.model');
+const Grade = require('../models/grade.model');
+const bcrypt = require('bcrypt');
 const { createUser } = require("./user.controller");
 const csv = require("csv-parser");
 const fs = require("fs");
+
 // Create one student with user
-// const createStudent = async (req, res) => {
-//   try {
-//     const { firstName, lastName, email, password, studentId, promo } = req.body;
-
-//     const user = await User.create({ firstName, lastName, email, password, role: "student" });
-//     const student = await Student.create({ studentId, promo, userId: user.id });
-
-//     res.status(201).json({ user, student });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 const createStudent = async (req, res) => {
   try {
     const { firstName, lastName, email, password, studentId, promoId } = req.body;
 
-    // 1. Create the user (role = student)
     const user = await createUser({
       firstName,
       lastName,
@@ -33,7 +22,6 @@ const createStudent = async (req, res) => {
       role: "student"
     });
 
-    // 2. Create the student profile linked to user
     const student = await Student.create({ studentId, promoId, userId: user.id });
 
     res.status(201).json({ user, student });
@@ -58,7 +46,6 @@ const uploadStudents = async (req, res) => {
         for (const row of results) {
           const { firstName, lastName, email, password, studentId, promoId } = row;
 
-          // 1. Create user
           const user = await createUser({
             firstName,
             lastName,
@@ -67,7 +54,6 @@ const uploadStudents = async (req, res) => {
             role: "student"
           });
 
-          // 2. Create student profile
           const student = await Student.create({
             studentId,
             promoId,
@@ -77,7 +63,7 @@ const uploadStudents = async (req, res) => {
           created.push({ user, student });
         }
 
-        fs.unlinkSync(req.file.path); // clean uploaded file
+        fs.unlinkSync(req.file.path);
         res.json({ message: "CSV import successful", count: created.length, data: created });
       } catch (err) {
         console.error("Insert error:", err);
@@ -89,11 +75,10 @@ const uploadStudents = async (req, res) => {
 // Create many students in bulk
 const createManyStudents = async (req, res) => {
   try {
-    const studentsData = req.body; 
+    const studentsData = req.body;
     const created = [];
 
     for (const s of studentsData) {
-      // 1. Create the user (role = student)
       const user = await createUser({
         firstName: s.firstName,
         lastName: s.lastName,
@@ -102,10 +87,10 @@ const createManyStudents = async (req, res) => {
         role: "student"
       });
 
-      // 2. Create the student profile
+      // Fixed: use promoId (not promo)
       const student = await Student.create({
         studentId: s.studentId,
-        promo: s.promo,
+        promoId: s.promoId,
         userId: user.id
       });
 
@@ -123,12 +108,10 @@ const getAllStudents = async (req, res) => {
   try {
     const students = await Student.findAll({
       include: [
-        { model: User }, // include user info
+        { model: User, attributes: { exclude: ['password'] } },
         {
           model: Promo,
-          include: [
-            { model: Grade } // include grade inside promo
-          ]
+          include: [{ model: Grade }]
         }
       ]
     });
@@ -139,11 +122,29 @@ const getAllStudents = async (req, res) => {
   }
 };
 
-
 // Get student by ID
 const getStudentById = async (req, res) => {
   try {
-    const student = await Student.findByPk(req.params.id, { include: User });
+    const student = await Student.findByPk(req.params.id, {
+      include: [{ model: User, attributes: { exclude: ['password'] } }]
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    res.json(student);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get student by userId (users table PK)
+const getStudentByUserId = async (req, res) => {
+  try {
+    const student = await Student.findOne({
+      where: { userId: req.params.userId },
+      include: [
+        { model: User, attributes: { exclude: ['password'] } },
+        { model: Promo, include: [{ model: Grade }] }
+      ]
+    });
     if (!student) return res.status(404).json({ error: 'Student not found' });
     res.json(student);
   } catch (error) {
@@ -160,6 +161,7 @@ const searchStudents = async (req, res) => {
     const students = await Student.findAll({
       include: {
         model: User,
+        attributes: { exclude: ['password'] },
         where: {
           [Op.or]: [
             { firstName: { [Op.like]: `%${q}%` } },
@@ -175,21 +177,29 @@ const searchStudents = async (req, res) => {
   }
 };
 
-// Update student by ID
+// Update student by ID — hashes password if provided, uses promoId
 const updateStudent = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, studentId, promo } = req.body;
-    const student = await Student.findByPk(req.params.id, { include: User });
+    const { firstName, lastName, email, password, studentId, promoId } = req.body;
+    const student = await Student.findByPk(req.params.id, {
+      include: [{ model: User }]
+    });
 
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
     if (student.User) {
-      await student.User.update({ firstName, lastName, email, password });
+      const userUpdates = { firstName, lastName, email };
+      if (password) {
+        userUpdates.password = await bcrypt.hash(password, 10);
+      }
+      await student.User.update(userUpdates);
     }
 
-    await student.update({ studentId, promo });
+    // Fixed: use promoId (not promo)
+    await student.update({ studentId, promoId });
 
-    res.json({ user: student.User, student });
+    const { password: _, ...userData } = student.User.get({ plain: true });
+    res.json({ user: userData, student });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -198,11 +208,13 @@ const updateStudent = async (req, res) => {
 // Delete student by ID
 const deleteStudent = async (req, res) => {
   try {
-    const student = await Student.findByPk(req.params.id, { include: User });
+    const student = await Student.findByPk(req.params.id, {
+      include: [{ model: User }]
+    });
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
-    await student.destroy();
     if (student.User) await student.User.destroy();
+    await student.destroy();
 
     res.json({ message: 'Student deleted' });
   } catch (error) {
@@ -210,12 +222,12 @@ const deleteStudent = async (req, res) => {
   }
 };
 
-// Export all at the bottom
 module.exports = {
   createStudent,
   createManyStudents,
   getAllStudents,
   getStudentById,
+  getStudentByUserId,
   searchStudents,
   updateStudent,
   deleteStudent,

@@ -1,111 +1,18 @@
 import React from 'react'
-import one from '../../assets/one.png'
 
-import esilogin from '../../assets/esilogin.png'
 const Moocs = () => {
-    
   return (
-    <div className='w-full flex flex-col bg-bluebg '>
-    <div className=' fixed w-10/12 h-12 bg-white flex flex-row items-center justify-between px-6'>
-        <p className='font-bold text-blue'>My Moocs</p>
-        <div className='flex flex-row gap-1 items-center'>
-        <div className='h-8 w-8 rounded-full overflow-hidden'>
-            <img src={one}/>
-        </div>
-        <div className='text-[10px]'>
-        <p className='font-semibold'>Azza</p>
-        <p>Role</p>
-        </div>
-        <button className='border-[0.2px] border-blue rounded-full flex ml-2 p-[2px] pt-[2.5px] items-center justify-center'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-2">
-<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-</svg>
-
-        </button>
-    </div>
-    </div>
-    <div className='flex flex-col my-14 px-7'>
-      <div>
-        <div className='w-full flex flex-row items-center justify-between'>
-      <h1 className='text-xl font-medium text-blue mt-4'>Reseaux 2</h1>
-        </div>
-      <div className='grid grid-cols-3 ml-4 gap-3 mt-1'>
-        <div className='flex flex-col items-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-            <div className='w-full rounded-lg shadow-md overflow-hidden'><img className='' src={esilogin}/></div>
-            <p className='text-gray text-sm'>A meeting to answer your questions about sockets and provide some examples to help you better understand.</p>
-        <div className='flex flex-row justify-between w-full items-center mt-2'>
-          <button className='bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1 rounded-sm'>View</button>
-          <button className='border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1 rounded-sm'>Delete</button>
-        </div>
-        </div>
-
-        <div className='flex flex-col items-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-            <div className='w-full rounded-lg shadow-md overflow-hidden'><img className='' src={esilogin}/></div>
-            <p className='text-gray text-sm'>A meeting to answer your questions about sockets and provide some examples to help you better understand.</p>
-        <div className='flex flex-row justify-between w-full items-center mt-2'>
-          <button className='bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1 rounded-sm'>View</button>
-          <button className='border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1 rounded-sm'>Delete</button>
-        </div>
-        </div>
-
-        <div className='flex flex-col items-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-            <div className='w-full rounded-lg shadow-md overflow-hidden'><img className='' src={esilogin}/></div>
-            <p className='text-gray text-sm'>A meeting to answer your questions about sockets and provide some examples to help you better understand.</p>
-        <div className='flex flex-row justify-between w-full items-center mt-2'>
-          <button className='bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1 rounded-sm'>View</button>
-          <button className='border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1 rounded-sm'>Delete</button>
-        </div>
-        </div>
-        <div className='flex flex-col items-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-            <div className='w-full rounded-lg shadow-md overflow-hidden'><img className='' src={esilogin}/></div>
-            <p className='text-gray text-sm'>A meeting to answer your questions about sockets and provide some examples to help you better understand.</p>
-        <div className='flex flex-row justify-between w-full items-center mt-2'>
-          <button className='bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1 rounded-sm'>View</button>
-          <button className='border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1 rounded-sm'>Delete</button>
-        </div>
-        </div>
-        <div className='flex flex-col items-center justify-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-        <p>Add New Chapter</p>
-        <div className='flex-grow flex items-center justify-center pb-4'>
-        <button className='flex  items-center justify-center p-4 bg-gray/40 rounded-full'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        </button>
-        </div>
+    <div className='w-full min-h-screen bg-bluebg'>
+      <div className='px-7 py-6'>
+        <h1 className='text-2xl font-bold text-blue mb-6'>My Moocs</h1>
+        <div className='bg-white rounded-xl shadow-sm flex flex-col items-center justify-center py-20 gap-3'>
+          <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-12 h-12 text-gray-300'>
+            <path strokeLinecap='round' strokeLinejoin='round' d='M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5' />
+          </svg>
+          <p className='text-gray font-medium'>Moocs feature coming soon</p>
+          <p className='text-xs text-gray'>You'll be able to upload and manage video content here.</p>
         </div>
       </div>
-      </div>
-
-
-
-
-      <div>
-        <div className='w-full flex flex-row items-center justify-between'>
-      <h1 className='text-xl font-medium text-blue mt-4'>Reseaux 2</h1>
-        </div>
-      <div className='grid grid-cols-3 ml-4 gap-4 mt-4'>
-      <div className='flex flex-col items-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-            <div className='w-full rounded-lg shadow-md overflow-hidden'><img className='' src={esilogin}/></div>
-            <p className='text-gray text-sm'>A meeting to answer your questions about sockets and provide some examples to help you better understand.</p>
-        <div className='flex flex-row justify-between w-full items-center mt-2'>
-          <button className='bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1 rounded-sm'>View</button>
-          <button className='border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1 rounded-sm'>Delete</button>
-        </div>
-        </div>  
-        <div className='flex flex-col items-center justify-center px-8 bg-white shadow-md rounded-md py-4 gap-2'>
-        <p>Add New Chapter</p>
-        <div className='flex-grow flex items-center justify-center pb-4'>
-        <button className='flex  items-center justify-center p-4 bg-gray/40 rounded-full'>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        </button>
-        </div>
-        </div>
-      </div>
-      </div>
-    </div>
     </div>
   )
 }

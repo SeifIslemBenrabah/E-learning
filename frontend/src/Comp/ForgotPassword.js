@@ -1,7 +1,7 @@
 import React, { useReducer, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom';
 import esilogin from '../assets/esilogin.png'
-import {AuthData} from '../Auth/AuthWrapper'
+import {AuthData} from '../Auth/AuthContext'
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const {user} =AuthData()

@@ -1,410 +1,220 @@
-import React, { useEffect, useState,useRef } from "react";
-import one from "../../assets/one.png";
-import { AuthData } from "../../Auth/AuthWrapper";
-import axios from "axios";
+import React, { useEffect, useState, useRef } from 'react'
+import { AuthData } from '../../Auth/AuthContext'
+import axios from 'axios'
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
 
 const Course = () => {
-  const { logout, user } = AuthData();
-  const [open, setOpen] = useState(false);
-  const [dragActive,setDragActive] = useState(false)
+  const { user } = AuthData()
   const inputRef = useRef(null)
-  const [files,setFiles] = useState([])
-  const [listmodules, setlistmodules] = useState([]);
-  const [formData, setFormData] = useState({
-    Name: "",
-    Description: "",
-    moduleId: "",
-  });
+  const [dragActive, setDragActive] = useState(false)
+  const [files, setFiles] = useState([])
+  const [listmodules, setListModules] = useState([])
+  const [isOpen, setIsOpen] = useState(false)
+  const [editId, setEditId] = useState(null)
+  const [formData, setFormData] = useState({ Name: '', Description: '', moduleId: '' })
 
-  const [isOpen, setIsOpen] = useState(false); // popup for add/edit
-  const [editId, setEditId] = useState(null);
+  const fetchModules = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/modules/teacher/${user.id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      setListModules(res.data)
+    } catch (err) {
+      console.log('Fetch error:', err)
+    }
+  }
 
-  // Fetch teacher's modules with their courses
   useEffect(() => {
-    const fetchModules = async (id) => {
-      try {
-        const res = await axios.get(
-          `http://localhost:5000/modules/teacher/${id}`,
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
-        );
-        console.log(res.data)
-        setlistmodules(res.data);
-      } catch (err) {
-        console.log("Fetch error:", err);
-      }
-    };
-    if (user?.id) fetchModules(user.id);
-  }, [user]);
+    if (user?.id) fetchModules()
+  }, [user])
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === "moduleId" ? Number(value) : value,
-    });
-  };
-
-  // Add or update course
-// inside Course component
-
-// Add or update course
-const handleSave = async (e) => {
-  e.preventDefault();
-  try {
-    const data = new FormData();
-    data.append("Name", formData.Name);
-    data.append("Description", formData.Description);
-    data.append("moduleId", formData.moduleId);
-
-    files.forEach((file) => {
-      data.append("files", file); // must match multer field name
-    });
-
-    if (editId) {
-      // Update course
-      await axios.put(`http://localhost:5000/cours/${editId}`, data, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-    } else {
-      // Create course with files
-      await axios.post("http://localhost:5000/cours", data, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-    }
-
-    // Reset form + 
-    
-    setIsOpen(false);
-    setFormData({ Name: "", Description: "", moduleId: "" });
-    setFiles([]);
-    setEditId(null);
-
-    // Refresh modules
-    const res = await axios.get(
-      `http://localhost:5000/modules/teacher/${user.id}`,
-      {
-        headers: { Authorization: `Bearer ${user.token}` },
-      }
-    );
-    setlistmodules(res.data);
-  } catch (err) {
-    console.log("Save error:", err);
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: name === 'moduleId' ? Number(value) : value })
   }
-};
 
-
-  // Edit course
-  const handleEdit = (cour) => {
-    setFormData({
-      Name: cour.Name,
-      Description: cour.Description || "",
-      moduleId: cour.moduleId,
-    });
-    setEditId(cour.id);
-    setIsOpen(true);
-  };
-
-  // Delete course
-  const handleDelete = async (id) => {
+  const handleSave = async (e) => {
+    e.preventDefault()
     try {
-      await axios.delete(`http://localhost:5000/cours/${id}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      const data = new FormData()
+      data.append('Name', formData.Name)
+      data.append('Description', formData.Description)
+      data.append('moduleId', formData.moduleId)
+      files.forEach((file) => data.append('files', file))
 
-      // refresh modules
-      const res = await axios.get(
-        `http://localhost:5000/modules/teacher/${user.id}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      setlistmodules(res.data);
+      if (editId) {
+        await axios.put(`${API_URL}/cours/${editId}`, data, {
+          headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'multipart/form-data' },
+        })
+      } else {
+        await axios.post(`${API_URL}/cours`, data, {
+          headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'multipart/form-data' },
+        })
+      }
+      setIsOpen(false)
+      setFormData({ Name: '', Description: '', moduleId: '' })
+      setFiles([])
+      setEditId(null)
+      fetchModules()
     } catch (err) {
-      console.log("Delete error:", err);
+      console.log('Save error:', err)
     }
-  };
+  }
 
-  function handleChangee(e) {  
-    e.preventDefault();  
-    console.log("File has been added");  
-    if (e.target.files && e.target.files[0]) {  
-      for (let i = 0; i < e.target.files["length"]; i++) {  
-        setFiles((prevState) => [...prevState, e.target.files[i]]);  
-      }  
-    }  
-  }  
-  
-  function handleSubmitFile(e) {  
-    if (files.length === 0) {  
-      // no file has been submitted  
-    } else {  
-      // write submit logic here  
-    }  
-  }  
-  
-  function handleDrop(e) {  
-    e.preventDefault();  
-    e.stopPropagation();  
-    setDragActive(false);  
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {  
-      for (let i = 0; i < e.dataTransfer.files["length"]; i++) {  
-        setFiles((prevState) => [...prevState, e.dataTransfer.files[i]]);  
-      }  
-    }  
-  }  
-  
-  function handleDragLeave(e) {  
-    e.preventDefault();  
-    e.stopPropagation();  
-    setDragActive(false);  
-  }  
-  
-  function handleDragOver(e) {  
-    e.preventDefault();  
-    e.stopPropagation();  
-    setDragActive(true);  
-  }  
-  
-  function handleDragEnter(e) {  
-    e.preventDefault();  
-    e.stopPropagation();  
-    setDragActive(true);  
-  }  
-  
-  function removeFile(fileName, idx) {  
-    const newArr = [...files];  
-    newArr.splice(idx, 1);  
-    setFiles([]);  
-    setFiles(newArr);  
-  }  
-  
-  function openFileExplorer() {  
-    inputRef.current.value = "";  
-    inputRef.current.click();  
-  }  
-  // utils/pdfHandler.js (or inside your component)
+  const handleEdit = (cour) => {
+    setFormData({ Name: cour.Name, Description: cour.Description || '', moduleId: cour.moduleId })
+    setEditId(cour.id)
+    setIsOpen(true)
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this course?')) return
+    try {
+      await axios.delete(`${API_URL}/cours/${id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      fetchModules()
+    } catch (err) {
+      console.log('Delete error:', err)
+    }
+  }
 
   const handlePdfClick = async (fileId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/files/${fileId}`, {
-        responseType: "blob",
-      });
-  
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-  
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "file.pdf"); // backend can send file name too
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const res = await axios.get(`${API_URL}/files/${fileId}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'file.pdf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
     } catch (err) {
-      console.error("Download error:", err);
+      console.log('Download error:', err)
     }
-  };
-  
-  
-  
-  
-  
+  }
+
+  const handleFileDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files) {
+      setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)])
+    }
+  }
+
+  const handleFileInput = (e) => {
+    if (e.target.files) {
+      setFiles(prev => [...prev, ...Array.from(e.target.files)])
+    }
+  }
+
+  const removeFile = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx))
+
+  const openModal = (moduleId) => {
+    setEditId(null)
+    setFiles([])
+    setFormData({ Name: '', Description: '', moduleId })
+    setIsOpen(true)
+  }
 
   return (
-    <div className="w-full flex flex-col bg-bluebg ">
-      {/* Navbar */}
-      <div className=" fixed w-10/12 h-12 bg-white flex flex-row items-center justify-between px-6">
-        <p className="font-semibold text-gray">
-          Welcome Back, Mr {user?.lastName || "User"} !
-        </p>
-        <div className="flex flex-row gap-1 items-center">
-          <div className="h-8 w-8 rounded-full overflow-hidden">
-            <img src={one} alt="profile" />
-          </div>
-          <div className="text-[10px]">
-            <p className="font-bold">
-              {user?.firstName + " " + user?.lastName || "User"}
-            </p>
-            <p>{user?.role || "Role"}</p>
-          </div>
-          <button
-            onClick={() => setOpen(!open)}
-            className="border-[0.2px] border-blue rounded-full flex ml-2 p-[2px] pt-[2.5px] items-center justify-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-2"> <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /> </svg>
-          </button>
-          {open && (
-            <div className="absolute top-10 right-0 bg-white shadow-md rounded-md w-28 py-2 text-sm z-50">
-              <button
-                onClick={logout}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+    <div className='w-full min-h-screen bg-bluebg'>
 
-      {/* Popup */}
       {isOpen && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="text-lg font-bold mb-4">
-              {editId ? "Edit Course" : "Add Course"}
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-3">
-              <input
-                type="text"
-                name="Name"
-                placeholder="Course Name"
-                value={formData.Name}
-                onChange={handleChange}
-                className="border p-2 rounded-md"
-                required
-              />
-              <input
-                type="text"
-                name="Description"
-                placeholder="Description"
-                value={formData.Description}
-                onChange={handleChange}
-                className="border p-2 rounded-md"
-              />
-              <form  
-        className={`${  
-          dragActive ? "bg-blue-400" : "bg-blue-100"  
-        }  p-4 w-1/3 rounded-lg  min-h-[10rem] text-center flex flex-col items-center justify-center`}  
-        onDragEnter={handleDragEnter}  
-        onSubmit={(e) => e.preventDefault()}  
-        onDrop={handleDrop}  
-        onDragLeave={handleDragLeave}  
-        onDragOver={handleDragOver}  
-      >  
-       <input  
-          placeholder="fileInput"  
-          className="hidden"  
-          ref={inputRef}  
-          type="file"  
-          multiple={true}  
-          onChange={handleChangee}  
-          accept=".xlsx,.xls,image/*,.doc, .docx,.ppt, .pptx,.txt,.pdf"  
-        />  
-  
-        <p>  
-          Drag & Drop files or{" "}  
-          <span  
-            className="font-bold text-blue-600 cursor-pointer"  
-            onClick={openFileExplorer}  
-          >  
-            <u>Select files</u>  
-          </span>{" "}  
-          to upload  
-        </p> 
-        <div className="flex flex-col items-center p-3">  
-          {files.map((file, idx) => (  
-            <div key={idx} className="flex flex-row space-x-5">  
-              <span>{file.name}</span>  
-              <span  
-                className="text-red-500 cursor-pointer"  
-                onClick={() => removeFile(file.name, idx)}  
-              >  
-                remove  
-              </span>  
-            </div>  
-          ))}  
-        </div>   
-      </form>  
-              <div className="flex justify-end gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 bg-gray-300 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary text-white rounded-md"
-                >
-                  Save
-                </button>
+        <div className='fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50'>
+          <div className='bg-white p-6 rounded-xl w-[480px] shadow-lg'>
+            <h2 className='text-lg font-bold mb-4'>{editId ? 'Edit Course' : 'Add Course'}</h2>
+            <form onSubmit={handleSave} className='flex flex-col gap-3'>
+              <input type='text' name='Name' placeholder='Course Name'
+                value={formData.Name} onChange={handleChange}
+                className='border border-gray-200 p-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary' required />
+              <input type='text' name='Description' placeholder='Description'
+                value={formData.Description} onChange={handleChange}
+                className='border border-gray-200 p-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary' />
+
+              {/* File drop zone */}
+              <div
+                onDragEnter={(e) => { e.preventDefault(); setDragActive(true) }}
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
+                onDragLeave={(e) => { e.preventDefault(); setDragActive(false) }}
+                onDrop={handleFileDrop}
+                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${dragActive ? 'border-primary bg-bluebg' : 'border-gray-200'}`}
+              >
+                <input ref={inputRef} type='file' multiple className='hidden'
+                  onChange={handleFileInput}
+                  accept='.pdf,.doc,.docx,.ppt,.pptx,.txt,.xlsx,.xls,image/*' />
+                <p className='text-sm text-gray'>
+                  Drag & drop files or{' '}
+                  <span className='text-primary font-semibold cursor-pointer underline'
+                    onClick={() => { inputRef.current.value = ''; inputRef.current.click() }}>
+                    browse
+                  </span>
+                </p>
+                {files.length > 0 && (
+                  <div className='mt-2 flex flex-col gap-1'>
+                    {files.map((f, i) => (
+                      <div key={i} className='flex justify-between items-center text-xs bg-bluebg rounded px-2 py-1'>
+                        <span>{f.name}</span>
+                        <button type='button' onClick={() => removeFile(i)} className='text-red-500 ml-2'>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className='flex justify-end gap-3 mt-2'>
+                <button type='button' onClick={() => setIsOpen(false)} className='px-4 py-2 bg-gray-100 rounded-lg text-sm'>Cancel</button>
+                <button type='submit' className='px-4 py-2 bg-primary text-white rounded-lg text-sm'>Save</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modules & Courses */}
-      <div className="flex flex-col my-14 px-7">
+      <div className='px-7 py-6'>
+        <h1 className='text-2xl font-bold text-blue mb-6'>My Courses</h1>
+        {listmodules.length === 0 && (
+          <p className='text-gray text-sm'>No modules assigned to you yet.</p>
+        )}
         {listmodules.map((m) => (
-          <div key={m.id}>
-            <div className="w-full flex flex-row items-center justify-between">
-              <h1 className="text-xl font-medium text-blue mt-4">{m.Name}</h1>
-            </div>
-
-            <div className="grid grid-cols-3 ml-4 gap-3 mt-1">
+          <div key={m.id} className='mb-8'>
+            <h2 className='text-lg font-semibold text-blue mb-3'>{m.Name}</h2>
+            <div className='grid grid-cols-3 gap-4'>
               {m.Cours?.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex flex-col items-start px-8 bg-white shadow-md rounded-md py-4 gap-2"
-                >
-                  <p className="font-semibold">{c.Name}</p>
-                  <p className="text-gray-600 text-sm">{c.Description}</p>
-                  {c.Files?.map((f)=>(
-                    <button  onClick={() => handlePdfClick(f.id)}
-                     className="text-cyan-400 text-sm"> - {f.name}</button>
+                <div key={c.id} className='flex flex-col bg-white shadow-sm rounded-xl px-5 py-4 gap-2'>
+                  <p className='font-semibold text-blue'>{c.Name}</p>
+                  <p className='text-gray text-xs'>{c.Description}</p>
+                  {c.Files?.map((f) => (
+                    <button key={f.id} onClick={() => handlePdfClick(f.id)}
+                      className='text-primary text-xs text-left hover:underline'>
+                      📄 {f.name}
+                    </button>
                   ))}
-                  <div className="flex flex-row justify-between w-full items-center mt-2">
-                    <button
-                      onClick={() => handleEdit(c)}
-                      className="bg-primary border-[1px] border-primary text-white font-light text-xs px-2 py-1"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="border-[1px] border-red-600 text-red-600 font-light text-xs px-1.5 py-1"
-                    >
-                      Delete
-                    </button>
+                  <div className='flex flex-row justify-between items-center mt-2'>
+                    <button onClick={() => handleEdit(c)}
+                      className='bg-primary text-white text-xs px-3 py-1.5 rounded-lg'>Edit</button>
+                    <button onClick={() => handleDelete(c.id)}
+                      className='border border-red-500 text-red-500 text-xs px-3 py-1.5 rounded-lg'>Delete</button>
                   </div>
                 </div>
               ))}
-
-              {/* Add new course button */}
-              <div className="flex flex-col items-center justify-center px-8 bg-white shadow-md rounded-md py-4 gap-2">
-                <p>Add New Course</p>
-                <div className="flex-grow flex items-center justify-center pb-4">
-                  <button
-                    onClick={() => {
-                      setIsOpen(true);
-                      setEditId(null);
-                      setFormData({
-                        Name: "",
-                        Description: "",
-                        moduleId: m.id,
-                      });
-                    }}
-                    className="flex  items-center justify-center p-4 bg-gray/40 rounded-full"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8"> <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /> </svg>
-                  </button>
+              <div className='flex flex-col items-center justify-center border-2 border-dashed border-gray-200 bg-white rounded-xl py-6 gap-2 cursor-pointer hover:border-primary transition-colors'
+                onClick={() => openModal(m.id)}>
+                <div className='p-3 bg-bluebg rounded-full'>
+                  <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-6 h-6 text-primary'>
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M12 4.5v15m7.5-7.5h-15' />
+                  </svg>
                 </div>
+                <p className='text-sm text-gray'>Add Course</p>
               </div>
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Course;
+export default Course

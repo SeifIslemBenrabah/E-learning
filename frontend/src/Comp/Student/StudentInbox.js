@@ -4,9 +4,9 @@ import { AuthData } from '../../Auth/AuthContext'
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
 
-const Inbox = () => {
+const StudentInbox = () => {
   const { user } = AuthData()
-  return <ChatInbox contactsUrl={`${API_URL}/messages/contacts/teacher/${user.id}`} />
+  return <ChatInbox contactsUrl={`${API_URL}/messages/contacts/student/${user.id}`} />
 }
 
-export default Inbox
+export default StudentInbox

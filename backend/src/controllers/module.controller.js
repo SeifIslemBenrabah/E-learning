@@ -79,42 +79,36 @@ const getAllModules = async (req, res) => {
 
 const getAllModulesByteacherId = async (req, res) => {
   try {
-    const { teacherId } = req.params; // assuming you pass it like /modules/:teacherId
+    const { teacherId } = req.params; // this is the userId from the frontend
+
+    // Resolve userId → teacher row id
+    const teacher = await Teacher.findOne({ where: { userId: teacherId } });
+    if (!teacher) return res.json([]);
 
     const modules = await Module.findAll({
+      where: { teacherId: teacher.id },
       include: [
         {
           model: Teacher,
-          as: "mainTeacher",  // main teacher
-          include: [
-            { model: User, 
-              where: { id: teacherId },
-            attributes: ["id", "firstName", "lastName", "email"] }
-          ]
+          as: "mainTeacher",
+          include: [{ model: User, attributes: ["id", "firstName", "lastName", "email"] }]
         },
         {
           model: Teacher,
-          as: "Teachers",     // co-teachers
-          through: { attributes: [] }, // hide join table
-          include: [
-            { model: User, attributes: ["id", "firstName", "lastName", "email"] }
-          ]
+          as: "Teachers",
+          through: { attributes: [] },
+          include: [{ model: User, attributes: ["id", "firstName", "lastName", "email"] }]
         },
         {
-          model:Cour,
-          as:"Cours",
-          attributes: ["id","Name","Description"],
-          include: [
-            {
-              model: File,
-              attributes: ["id", "name","link"],
-            },
-          ],
+          model: Cour,
+          as: "Cours",
+          attributes: ["id", "Name", "Description"],
+          include: [{ model: File, attributes: ["id", "name", "link"] }]
         },
         {
-          model:Resource,
-          as:"Resources",
-          attributes:["id","Name","Link","Type"]
+          model: Resource,
+          as: "Resources",
+          attributes: ["id", "Name", "Link", "Type"]
         },
         { model: Grade, attributes: ["id", "name"] }
       ]
@@ -133,9 +127,21 @@ const getModuleById = async (req, res) => {
       include: [
         {
           model: Teacher,
+          as: "mainTeacher",
           include: [{ model: User, attributes: ["id", "firstName", "lastName", "email"] }]
         },
-        { model: Grade, attributes: ["id", "name"] }
+        { model: Grade, attributes: ["id", "name"] },
+        {
+          model: Cour,
+          as: "Cours",
+          attributes: ["id", "Name", "Description"],
+          include: [{ model: File, attributes: ["id", "name", "link"] }]
+        },
+        {
+          model: Resource,
+          as: "Resources",
+          attributes: ["id", "Name", "Link", "Type"]
+        }
       ]
     });
 
@@ -144,6 +150,37 @@ const getModuleById = async (req, res) => {
     }
 
     res.json(module);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getAllModulesByGradeId = async (req, res) => {
+  try {
+    const { gradeId } = req.params;
+    const modules = await Module.findAll({
+      where: { gradeId },
+      include: [
+        {
+          model: Teacher,
+          as: "mainTeacher",
+          include: [{ model: User, attributes: ["id", "firstName", "lastName"] }]
+        },
+        {
+          model: Cour,
+          as: "Cours",
+          attributes: ["id", "Name", "Description"],
+          include: [{ model: File, attributes: ["id", "name", "link"] }]
+        },
+        {
+          model: Resource,
+          as: "Resources",
+          attributes: ["id", "Name", "Link", "Type"]
+        },
+        { model: Grade, attributes: ["id", "name"] }
+      ]
+    });
+    res.json(modules);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -218,6 +255,10 @@ const deleteModule = async (req, res) => {
   try {
     const module = await Module.findByPk(req.params.id);
 
+    if (!module) {
+      return res.status(404).json({ error: "Module not found" });
+    }
+
     await module.destroy();
     res.json({ message: "Module deleted successfully" });
   } catch (error) {
@@ -232,5 +273,6 @@ module.exports = {
   searchModules,
   updateModule,
   deleteModule,
-  getAllModulesByteacherId
+  getAllModulesByteacherId,
+  getAllModulesByGradeId
 };

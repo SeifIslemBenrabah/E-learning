@@ -1,107 +1,122 @@
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import axios from 'axios'
-import React,{useEffect,useState} from 'react'
-import one from '../assets/one.png'
-import esilogin from '../assets/esilogin.png'
+import { AuthData } from '../Auth/AuthContext'
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000'
+
 const HomePageStudent = () => {
-    const user = JSON.parse(localStorage.getItem('user'))
-    const [listteachers, setlistteachers] = useState([]);
-    useEffect(()=>{
-        const fatchTeachers = async()=>{
-            try{
-                const res = await axios.get(`http://localhost:8080/user/student`, {
-                    headers: {
-                        Authorization: `Bearer ${user.token}`,
-                    },
-                })
-                setlistteachers(res.data)
-            }
-            catch(err){
-                console.log('err:',err)
-            }
-        };
-        fatchTeachers();
-    },[])
+  const { user } = AuthData()
+  const [modules, setModules] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        // Step 1: find student record by userId to get promoId → gradeId
+        let student
+        try {
+          const studentRes = await axios.get(`${API_URL}/student/user/${user.id}`, {
+            headers: { Authorization: `Bearer ${user.token}` }
+          })
+          student = studentRes.data
+        } catch (err) {
+          const status = err.response?.status
+          if (status === 404) {
+            setError('No student record found for your account. Please contact your admin.')
+          } else {
+            setError(`Server error while loading your profile (${status || 'network error'}).`)
+          }
+          return
+        }
+
+        if (!student?.Promo?.Grade?.id) {
+          setError('Your student profile is missing a promo or grade. Please contact your admin.')
+          return
+        }
+
+        // Step 2: fetch modules for that grade
+        const modulesRes = await axios.get(`${API_URL}/modules/grade/${student.Promo.Grade.id}`, {
+          headers: { Authorization: `Bearer ${user.token}` }
+        })
+        setModules(modulesRes.data)
+      } catch (err) {
+        setError('Failed to load your courses.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchModules()
+  }, [user.id, user.token])
+
+  const teacherName = (mod) => {
+    const t = mod.mainTeacher?.User
+    return t ? `${t.firstName} ${t.lastName}` : 'Unknown teacher'
+  }
 
   return (
-    <div className='w-full flex flex-col bg-bluebg -z-40'>
-        <div className=' fixed w-10/12 h-12 bg-white flex flex-row items-center justify-between px-6'>
-            <p className='font-semibold text-gray'>Welcome Back,Mr Azza !</p>
-            <div className='flex flex-row gap-1 items-center'>
-            <div className='h-8 w-8 rounded-full overflow-hidden'>
-                <img src={one}/>
-            </div>
-            <div className='text-[10px]'>
-            <p className='font-semibold'>Bensaber</p>
-            <p>Role</p>
-            </div>
-            <button className='border-[0.2px] border-blue rounded-full flex ml-2 p-[2px] pt-[2.5px] items-center justify-center'>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-2">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-</svg>
-
-            </button>
+    <div className='w-full min-h-screen bg-bluebg'>
+      <div className='px-8 py-6'>
+        <div className='mb-6'>
+          <h1 className='text-2xl font-bold text-blue'>Welcome back, {user?.firstName}!</h1>
+          <p className='text-sm text-gray mt-1'>Here are your enrolled courses.</p>
         </div>
-        </div>
-        <div className='w-full flex-grow mt-12 flex flex-row pl-7 pr-5 pt-4 gap-5'>
-            <div className='h-full w-2/3 flex flex-col items-start gap-4'>
-            <p className=' text-gray'>My Courses</p>
-            <div className='w-full grid grid-cols-3 gap-5'>
-              <div className='bg-white px-2 pt-2 pb-4 shadow-md rounded-md flex flex-col items-center gap-2 font-light overflow-hidden'>
-                <div className='w-11/12 h-20 flex items-center bg-amber-300 overflow-hidden rounded-md'>
-              <img src={esilogin} className='h-20'/>
-              </div>
-              <p>Operating System</p>
-              </div>
 
-              <a href='/student/module/1' className='bg-white px-2 pt-2 pb-4 shadow-md rounded-md flex flex-col items-center gap-2 font-light overflow-hidden'>
-              <div className='w-11/12 h-20 flex items-center bg-amber-300 overflow-hidden rounded-md'>
-              <img src={esilogin} className='h-20'/>
-              </div>
-              <p>Reseaux 2</p>
-              </a>
+        {loading && (
+          <div className='flex justify-center items-center py-20'>
+            <div className='w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin' />
+          </div>
+        )}
 
-              <div className='bg-white px-2 pt-2 pb-4 shadow-md rounded-md flex flex-col items-center gap-2 font-light overflow-hidden'>
-              <div className='w-11/12 h-20 flex items-center bg-amber-300 overflow-hidden rounded-md'>
-              <img src={esilogin} className='h-20'/>
-              </div>
-              <p>Operating System</p>
-              </div>
-            </div>
-            </div>
-            <div className=' fixed top-28 right-5 h-5/6 w-[270px] z-50'>
-            <div className='w-full  rounded-md text-white gap-4 bg-red-500/35 flex flex-col items-start px-5 py-2 pb-6 shadow-md'>
-            <div className='flex flex-row gap-2 items-center mt-4'>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-7">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        {error && (
+          <div className='bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm'>{error}</div>
+        )}
+
+        {!loading && !error && modules.length === 0 && (
+          <div className='bg-white rounded-xl shadow-sm flex flex-col items-center justify-center py-20 gap-3'>
+            <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-12 h-12 text-gray-300'>
+              <path strokeLinecap='round' strokeLinejoin='round' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />
             </svg>
-            <p className='font-bold text-lg'>Remainder</p>
-            </div>
-            <p className='text-sm font-light'>Assignment Deadline Reminder: The deadline for Tp socket is  approaching. Would you like to extend the deadline? </p>
-            <div className=' w-full flex flex-row justify-between items-center text-sm'>
-                <button className='font-semibold'>Edit</button>
-                <button className='font-light'>Cancel</button>
-            </div>
-            </div>
-            <div className='flex flex-col w-full items-start mt-5 gap-3'>
-                <div className='w-full flex flex-row justify-between items-center'>
-                    <p className='text-lg font-semibold'>Chat</p>
-                    <button className='font-light text-sm text-green-500'>View All</button>
-                </div>
-                <div className='w-full border-l-8 border-green-500 flex flex-row items-center justify-between rounded-md px-4 py-2'>
-                    <div className='flex flex-row gap-2 items-center'>
-                <div className='h-8 w-8 rounded-full overflow-hidden'>
-                <img src={one}/>
-            </div>
-            <p>Benrabah Seif Islem</p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-green-500">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-</svg>
+            <p className='text-gray font-medium'>No courses found</p>
+            <p className='text-xs text-gray'>Ask your admin to assign your promo to a grade.</p>
+          </div>
+        )}
 
+        {!loading && !error && modules.length > 0 && (
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
+            {modules.map(mod => (
+              <Link key={mod.id} to={`/student/module/${mod.id}`}
+                className='bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden'>
+                <div className='h-24 bg-gradient-to-br from-primary to-blue flex items-center justify-center'>
+                  <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='white' className='w-10 h-10 opacity-70'>
+                    <path strokeLinecap='round' strokeLinejoin='round' d='M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25' />
+                  </svg>
                 </div>
-            </div>
-            </div>
-        </div>
+                <div className='px-4 py-3'>
+                  <p className='font-semibold text-blue text-sm'>{mod.Name}</p>
+                  {mod.Description && (
+                    <p className='text-xs text-gray mt-0.5 line-clamp-2'>{mod.Description}</p>
+                  )}
+                  <div className='flex items-center gap-1 mt-2'>
+                    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='w-3.5 h-3.5 text-gray shrink-0'>
+                      <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z' />
+                    </svg>
+                    <span className='text-xs text-gray truncate'>{teacherName(mod)}</span>
+                    {mod.Grade && (
+                      <span className='ml-auto text-xs text-primary font-medium shrink-0'>{mod.Grade.name}</span>
+                    )}
+                  </div>
+                  <div className='flex items-center gap-3 mt-2 text-xs text-gray'>
+                    <span>{mod.Cours?.length || 0} chapters</span>
+                    <span>{mod.Resources?.length || 0} resources</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -8,7 +8,8 @@ const {
   searchModules,
   updateModule,
   deleteModule,
-  getAllModulesByteacherId
+  getAllModulesByteacherId,
+  getAllModulesByGradeId
 } = require("../controllers/module.controller");
 
 // Create a module
@@ -21,7 +22,8 @@ router.get("/", getAllModules);
 router.get("/search", searchModules);
 
 
-router.get("/teacher/:teacherId",getAllModulesByteacherId)
+router.get("/teacher/:teacherId", getAllModulesByteacherId)
+router.get("/grade/:gradeId", getAllModulesByGradeId)
 // Get a module by ID
 router.get("/:id", getModuleById);
 

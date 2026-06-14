@@ -20,6 +20,9 @@ import Quizze from "../Teacher/Quizze"
 import Assignment from "../Teacher/Assignment"
 import Inbox from "../Teacher/Inbox"
 import HomePageStudent from "../HomePageStudent"
+import StudentQuizzes from "../Student/StudentQuizzes"
+import StudentInbox from "../Student/StudentInbox"
+import CreateQuizze from "../Teacher/CreateQuizze"
 export const routesConfig = {
     public :[
         {path:'/',element:<Homepage/>},
@@ -40,7 +43,9 @@ export const routesConfig = {
         {path:'/student',element:<Student/>, children:[
             {path:'Home',element:<HomePageStudent/>},
             {path:'module/:id',element:<ModuleDetail/>},
-            {path:'chapiter/:id',element:<ChapiterDetail/>}
+            {path:'chapiter/:id',element:<ChapiterDetail/>},
+            {path:'Quizzes',element:<StudentQuizzes/>},
+            {path:'Inbox',element:<StudentInbox/>}
         ]}
     ],
     teacher:[
@@ -50,6 +55,7 @@ export const routesConfig = {
             {path:'Moocs',element:<Moocs/>},
             {path:'Resources',element:<Resources/>},
             {path:'Quizze',element:<Quizze/>},
+            {path:'CreateQuizze',element:<CreateQuizze/>},
             {path:'Assignment',element:<Assignment/>},
             {path:'Inbox',element:<Inbox/>}
         ]}

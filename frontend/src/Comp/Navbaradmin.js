@@ -1,5 +1,5 @@
 import React , { useState } from 'react'
-import { AuthData } from "../Auth/AuthWrapper";
+import { AuthData } from "../Auth/AuthContext";
 import one from '../assets/one.png'
 const Navbaradmin = () => {
   const { logout, user } = AuthData();

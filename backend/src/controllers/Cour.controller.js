@@ -29,18 +29,17 @@ const createCour = async (req, res) => {
       }
 
       for (const file of req.files) {
-        // Build unique filename
-        const uniqueName = Date.now() + "-" + file.originalname;
+        // Sanitize filename to prevent path traversal
+        const safeName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+        const uniqueName = Date.now() + "-" + safeName;
         const filePath = path.join(uploadDir, uniqueName);
 
-        // Save file to uploads folder
         fs.writeFileSync(filePath, file.buffer);
 
-        // Save file info in DB
         await File.create(
           {
             name: file.originalname,
-            link: `uploads/${uniqueName}`, // store relative path
+            link: `uploads/${uniqueName}`,
             courId: cour.id,
           },
           { transaction: t }
@@ -74,11 +73,14 @@ const getCourById = async (req, res) => {
   try {
     const { id } = req.params;
     const cour = await Cour.findByPk(id, {
-      include: [{ model: Module, attributes: ['id', 'Name']}]
+      include: [
+        { model: Module, attributes: ['id', 'Name'] },
+        { model: File, attributes: ['id', 'name', 'link'] }
+      ]
     });
 
     if (!cour) {
-      return res.status(404).json({ message:'Cour not found'});
+      return res.status(404).json({ message: 'Cour not found' });
     }
 
     res.json(cour);
@@ -122,7 +124,8 @@ const updateCour = async (req, res) => {
       }
 
       for (const file of req.files) {
-        const uniqueName = Date.now() + "-" + file.originalname;
+        const safeName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+        const uniqueName = Date.now() + "-" + safeName;
         const filePath = path.join(uploadDir, uniqueName);
         fs.writeFileSync(filePath, file.buffer);
 

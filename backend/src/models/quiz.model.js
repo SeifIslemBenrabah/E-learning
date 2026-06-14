@@ -1,27 +1,28 @@
 // models/quiz.model.js
 const { DataTypes, Model } = require("sequelize");
 const sequelize = require("../config/db");
-const Module = require('./module.model')
+const Cour = require('./cour.model');
 
 class Quiz extends Model {}
 Quiz.init(
   {
-    title: { 
-      type: DataTypes.STRING, 
-      allowNull: false 
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
-    moduleId:{
-        type: DataTypes.INTEGER,
-        references:{
-            model:"modules",
-            key:'id'
-        },allowNull:false
+    courId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: "cours",
+        key: 'id'
+      },
+      allowNull: true
     }
   },
   { sequelize, modelName: "Quiz", tableName: "quizzes" }
 );
 
-Module.hasMany(Quiz, { foreignKey: "moduleId" });
-Quiz.belongsTo(Module, { foreignKey: "moduleId" });
+Cour.hasMany(Quiz, { foreignKey: "courId" });
+Quiz.belongsTo(Cour, { foreignKey: "courId" });
 
 module.exports = Quiz;
